@@ -1,0 +1,10 @@
+# Build artifacts are published as GitHub release assets, never committed.
+# A committed .mpk drifts out of sync with the build that produced it.
+*.mpk
+
+node_modules/
+dist/
+
+# OS cruft
+.DS_Store
+Thumbs.db
