@@ -61,13 +61,19 @@ All properties as declared in `MassImporterReview.xml`.
 
 ### API key and security
 
-The API Key property is a Studio Pro **expression**, evaluated in the end user's browser. The resulting bearer token is present in the page delivered to the client, which means any end user of the Mendix app who can inspect network requests or page state can read it and call the Mass Importer API directly with that key.
+The API Key property is a Studio Pro **expression**, evaluated in the end user's browser. The resulting bearer token is present in the page delivered to the client, which means any end user of the Mendix app who can inspect network requests or page state can read it and call the Mass Importer API directly with that key. This is a known limitation of a client-side widget property, not an oversight. Plan for the key being readable by everyone who can open the page.
 
-This is a known limitation of a client-side widget property, not an oversight. Because of it:
+**What the key is scoped to.** A Mass Importer API key is scoped to exactly one Mass Importer organization. It cannot read or write another organization's data, and that boundary is enforced on the server on every request. Below the organization it is not scoped at all: within its own organization the key has full access. There is no per template, per import, or per external ID key scope, and rate limits apply to the organization rather than to an individual key.
 
-- The key you put in this property must be a scoped, low-privilege, per-tenant API key, never an organization-wide administrative key.
-- Scope and rate-limit the key on the Mass Importer side (per template, per import, or per external ID) so that a leaked key cannot be used to read or act on data outside its intended scope.
-- Rotate the key if you suspect exposure.
+**What a leaked key reaches.** Every template, every import, and every row in that organization, for reading and for writing, plus webhook configuration and data exports. Treat the key as equivalent to handing out access to the whole organization.
+
+**External ID is a filter, not a boundary.** The External ID property narrows what the widget requests. It is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. Do not rely on it to keep one customer, project, or tenant from seeing another.
+
+Because of all of this:
+
+- Use a dedicated Mass Importer organization for widget traffic, holding only the templates and imports that the app's end users are meant to reach. Keep administrative work and any data they should not see in a separate organization.
+- Never put a key belonging to your main organization into this property.
+- Revoke the key as soon as you suspect exposure. Revocation takes effect on the next request made with it.
 
 ### Data handling
 
@@ -75,7 +81,7 @@ The widget fetches import and row data from the Mass Importer API (`massimporter
 
 ### Support
 
-File issues, suggestions, and feature requests at [github.com/PeralysLLC/MassImporterWidgets/issues](https://github.com/PeralysLLC/MassImporterWidgets/issues). Include the widget name, its version, your Studio Pro version, and the steps to reproduce.
+File issues, suggestions, and feature requests at [github.com/peralys-apps/MassImporterWidgets/issues](https://github.com/peralys-apps/MassImporterWidgets/issues). Include the widget name, its version, your Studio Pro version, and the steps to reproduce.
 
 ## License
 

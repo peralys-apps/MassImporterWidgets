@@ -56,9 +56,9 @@ Compare the output against the hash in the release notes. If they differ, do not
 
 Both widgets take the API key as a widget property. Mendix evaluates that expression in the browser, so the resulting bearer token is present in the delivered page and is readable by any end user of the app.
 
-Use a scoped, low-privilege, per-tenant API key. Do not use an administrative key. Scope is enforced server-side by Mass Importer, so a key restricted to one organization cannot reach another.
+A Mass Importer API key is scoped to exactly one Mass Importer organization, and that boundary is enforced on the server on every request. Below the organization it is not scoped at all: the key has full access to every template, import and row in its organization, and the External ID property is a caller-supplied filter, not a boundary. There is no per template, per import, or per external ID key scope.
 
-This is a documented characteristic of the current design, not an oversight. If your deployment cannot accept a browser-readable key, proxy the calls through a Mendix microflow or REST action so the key stays server-side.
+Because of this, use a dedicated Mass Importer organization for widget traffic that holds only the templates and imports the app's end users are meant to reach, never put a key belonging to your main organization into the property, and revoke the key as soon as you suspect exposure. This is a documented characteristic of the current design, not an oversight. If your deployment cannot accept a browser-readable key, proxy the calls through a Mendix microflow or REST action so the key stays server-side.
 
 ## Data handling
 
