@@ -69,7 +69,7 @@ The API Key property is a Studio Pro **expression**, evaluated in the end user's
 
 **What a leaked key reaches.** Every template, every import, and every row in that organization, for reading and for writing, plus webhook configuration and data exports. Treat the key as equivalent to handing out access to the whole organization.
 
-**External ID is a filter, not a boundary.** The External ID property narrows what the widget requests. It is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. Do not rely on it to keep one customer, project, or tenant from seeing another.
+**External ID is a filter unless the key is bound to one.** The External ID property narrows what the widget requests. With an ordinary key it is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. To make it a real boundary, create the API key bound to an external ID in the Mass Importer dashboard: a bound key can only see and create imports carrying that value, and the server enforces it on every request. When you use a bound key, set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
 
 Because of all of this:
 
