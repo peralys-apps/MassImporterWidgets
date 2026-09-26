@@ -56,9 +56,9 @@ Compare the output against the hash in the release notes. If they differ, do not
 
 Both widgets take the API key as a widget property. Mendix evaluates that expression in the browser, so the resulting bearer token is present in the delivered page and is readable by any end user of the app.
 
-A Mass Importer API key is scoped to exactly one Mass Importer organization, and that boundary is enforced on the server on every request. Below the organization it is not scoped at all: the key has full access to every template, import and row in its organization, and the External ID property is a caller-supplied filter, not a boundary. There is no per template, per import, or per external ID key scope.
+A Mass Importer API key is always confined to one Mass Importer organization, and that boundary is enforced on the server on every request. When the key is created in the Mass Importer dashboard it can be narrowed further: to the templates the page uses, to one external ID (so the External ID property becomes a boundary rather than a filter), to read-only access, and to its own requests-per-minute cap. A key narrowed to templates or an external ID can never manage webhooks, and new keys do not manage webhooks unless you allow it. Each widget's documentation says which narrowing suits it.
 
-Because of this, use a dedicated Mass Importer organization for widget traffic that holds only the templates and imports the app's end users are meant to reach, never put a key belonging to your main organization into the property, and revoke the key as soon as you suspect exposure. This is a documented characteristic of the current design, not an oversight. If your deployment cannot accept a browser-readable key, proxy the calls through a Mendix microflow or REST action so the key stays server-side.
+Use a dedicated, narrowed key for the widgets, never a key created with no limits, and revoke it as soon as you suspect exposure; revocation takes effect on the next request. For the strongest separation you can also give widget traffic its own Mass Importer organization. If your deployment cannot accept a browser-readable key at all, proxy the calls through a Mendix microflow or REST action so the key stays server-side.
 
 ## Data handling
 

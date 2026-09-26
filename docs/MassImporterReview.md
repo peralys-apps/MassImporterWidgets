@@ -63,16 +63,22 @@ All properties as declared in `MassImporterReview.xml`.
 
 The API Key property is a Studio Pro **expression**, evaluated in the end user's browser. The resulting bearer token is present in the page delivered to the client, which means any end user of the Mendix app who can inspect network requests or page state can read it and call the Mass Importer API directly with that key. This is a known limitation of a client-side widget property, not an oversight. Plan for the key being readable by everyone who can open the page.
 
-**What the key is scoped to.** A Mass Importer API key is scoped to exactly one Mass Importer organization. It cannot read or write another organization's data, and that boundary is enforced on the server on every request. Below the organization it is not scoped at all: within its own organization the key has full access. There is no per template, per import, or per external ID key scope, and rate limits apply to the organization rather than to an individual key.
+**What the key is scoped to.** A Mass Importer API key is always confined to one Mass Importer organization. It cannot read or write another organization's data, and that boundary is enforced on the server on every request. When you create the key in the Mass Importer dashboard you can narrow it further, and a key used by this widget should be narrowed:
 
-**What a leaked key reaches.** Every template, every import, and every row in that organization, for reading and for writing, plus webhook configuration and data exports. Treat the key as equivalent to handing out access to the whole organization.
+- **Templates:** limit the key to the templates this page uses. Other templates, and their imports and rows, behave as if they did not exist.
+- **External ID:** bind the key to one external ID when each of your customers or tenants gets their own key (see below).
+- **Can manage webhooks:** leave it off, which is the default for new keys. A key bound to an external ID or limited to templates can never manage webhooks, because a webhook receives events for every import in the organization.
+- **Rate limit:** optionally give the key its own requests-per-minute cap. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
+- **Read-only:** Do not make it read-only if users edit, fix, or import rows on this page; a read-only key suits a page that only shows results.
+
+**What a leaked key reaches.** Exactly what the key was narrowed to: the templates it is limited to, and their imports and rows (only those carrying its external ID, if it is bound), for reading and for writing. A key created with no limits reaches every template, import, and row in the organization, plus webhook configuration if that permission was granted. Treat an unnarrowed key as equivalent to handing out access to the whole organization.
 
 **External ID is a filter unless the key is bound to one.** The External ID property narrows what the widget requests. With an ordinary key it is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. To make it a real boundary, create the API key bound to an external ID in the Mass Importer dashboard: a bound key can only see and create imports carrying that value, and the server enforces it on every request. When you use a bound key, set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
 
 Because of all of this:
 
-- Use a dedicated Mass Importer organization for widget traffic, holding only the templates and imports that the app's end users are meant to reach. Keep administrative work and any data they should not see in a separate organization.
-- Never put a key belonging to your main organization into this property.
+- Create a dedicated key for this property and narrow it as described above. Never put a key created with no limits into it.
+- For the strongest separation, you can also give widget traffic its own Mass Importer organization, holding only the templates and imports the app's end users are meant to reach.
 - Revoke the key as soon as you suspect exposure. Revocation takes effect on the next request made with it.
 
 ### Data handling
