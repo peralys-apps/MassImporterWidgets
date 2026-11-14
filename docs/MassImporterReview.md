@@ -20,7 +20,7 @@ Mass Importer's plan tiers gate what the widget can show and export:
 </tbody>
 </table>
 
-The grid reads the organization's current plan tier from the API. On Free and Starter, the Parquet option in the export menu is shown locked with a message that it requires the Pro plan; CSV and Excel export remain available on every tier. If the plan tier cannot be determined (for example, a network failure), the widget fails closed and treats Parquet as locked, the same as on Free.
+The grid reads the organization's current plan tier from the API. On Free and Starter, the Parquet option in the export menu is shown locked with a message that it requires the Pro plan; CSV and Excel export remain available on every tier. Parquet stays locked until the plan is known. While the widget is still checking the plan, the Parquet option says so. If the plan cannot be read (for example, after a network failure and one retry), Parquet stays locked with a message that it is unavailable right now; the widget does not ask you to upgrade in that case.
 
 This widget does not enforce row limits or file-size limits itself; those are enforced by the Mass Importer API and, on upload, by the companion Mass Importer Upload widget's <code>maxFileSizeMB</code> property.
 
@@ -46,7 +46,6 @@ All properties as declared in `MassImporterReview.xml`.
 <tr><td>External ID (<code>externalId</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>Filters the import list to only show imports created with this external ID. Matches the "External ID" property on the Upload widget so the two widgets can be paired per customer, project, or tenant.</td></tr>
 <tr><td>Status Filter (<code>statusFilter</code>)</td><td>String</td><td>No</td><td><code>queued,profiling,mapping,validating,validated,completed</code></td><td>Comma-separated list of import statuses to include in the import list.</td></tr>
 <tr><td>Auto Fetch (<code>autoFetch</code>)</td><td>Boolean</td><td>No</td><td><code>true</code></td><td>Automatically fetch data when the widget loads, without waiting for a user action.</td></tr>
-<tr><td>View Filter (<code>viewFilter</code>)</td><td>Enumeration: All Rows / Valid Rows Only / Error Rows Only</td><td>No</td><td><code>all</code></td><td>Filters which rows are displayed in the grid.</td></tr>
 <tr><td>Rows Per Page (<code>previewLimit</code>)</td><td>Integer</td><td>No</td><td><code>500</code></td><td>Number of rows fetched and displayed per page (1 to 500).</td></tr>
 <tr><td>Widget Height (<code>widgetHeight</code>)</td><td>String</td><td>No</td><td><code>calc(100vh - 10em)</code></td><td>CSS height for the widget container, for example <code>600px</code>, <code>100vh</code>, or a <code>calc()</code> expression.</td></tr>
 <tr><td>Show Preview (<code>showPreview</code>)</td><td>Boolean</td><td>No</td><td><code>true</code></td><td>Shows a preview table of the data.</td></tr>
@@ -57,7 +56,17 @@ All properties as declared in `MassImporterReview.xml`.
 </tbody>
 </table>
 
-13 properties in total.
+12 properties in total.
+
+### Exporting rows
+
+The **Export** menu offers a CSV file, an Excel workbook and a Parquet file, each with **All rows**, **Valid rows** and **Error rows**.
+
+- **CSV and Parquet** export the sheet that is open in the grid. **Excel** exports a workbook with every sheet of the import, one tab per sheet, so on an import with several sheets the Excel options follow the totals for the whole import.
+- **Valid rows** and **Error rows** are hidden when there are no such rows to export. On a sheet with no rows at all, its CSV and Parquet options are shown disabled. The Export button itself is disabled only when nothing can be exported in any format.
+- **Saved edits are included.** Every export contains the edits you have saved, inline or bulk.
+- **Unsaved edits block export.** While the grid holds edits that are not saved yet, the Export button is disabled with the hint "Save or discard your edits first". Save or discard them, then export.
+- **Parquet** needs the Pro or Enterprise plan and stays locked until the plan is known (see the plan table above).
 
 ### API key and security
 
