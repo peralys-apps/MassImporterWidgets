@@ -66,6 +66,7 @@ The **Export** menu offers a CSV file, an Excel workbook and a Parquet file, eac
 - **Valid rows** and **Error rows** are hidden when there are no such rows to export. On a sheet with no rows at all, its CSV and Parquet options are shown disabled. The Export button itself is disabled only when nothing can be exported in any format.
 - **Saved edits are included.** Every export contains the edits you have saved, inline or bulk.
 - **Unsaved edits block export.** While the grid holds edits that are not saved yet, the Export button is disabled with the hint "Save or discard your edits first". Save or discard them, then export.
+- **A running bulk fix blocks export.** While a bulk fix is still applying to the import, the Export button is disabled with the hint "A bulk fix is running. Export when it finishes." so an export never mixes fixed and unfixed rows.
 - **Parquet** needs the Pro or Enterprise plan and stays locked until the plan is known (see the plan table above).
 
 ### API key and security
