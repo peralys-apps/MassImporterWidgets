@@ -1,6 +1,6 @@
 ## Mass Importer Review
 
-Fetch and display validated import data from the Mass Importer API. The widget renders an AG Grid based review surface over an import created by the Mass Importer Upload widget (or by any other Mass Importer client): a list of imports, a row grid with valid and error rows, inline cell editing, bulk edit across selected rows, and an export menu (CSV, Excel, Parquet).
+Fetch and display validated import data from the Mass Importer API. The widget renders an AG Grid based review surface over an import created by the Mass Importer Upload widget (or by any other Mass Importer client): a list of imports, a row grid with valid and error rows, inline cell editing, bulk edit across invalid rows, and an export menu (CSV, Excel, Parquet).
 
 ### Requirement: a Mass Importer account
 
@@ -52,7 +52,7 @@ All properties as declared in `MassImporterReview.xml`.
 <tr><td>Imported Rows Attribute (<code>importedRowsAttribute</code>)</td><td>Attribute (String)</td><td>No</td><td>none</td><td>The attribute the widget writes the JSON payload of imported rows to when "Import All" is clicked, before triggering On Import All. If left blank, the JSON is passed only through the <code>rowsJson</code> action variable on On Import All.</td></tr>
 <tr><td>On Data Loaded (<code>onDataLoaded</code>)</td><td>Action</td><td>No</td><td>none</td><td>Triggered when data is successfully loaded.</td></tr>
 <tr><td>On Error (<code>onError</code>)</td><td>Action</td><td>No</td><td>none</td><td>Triggered when an error occurs.</td></tr>
-<tr><td>On Import All (<code>onImportAll</code>)</td><td>Action</td><td>No</td><td>none</td><td>Triggered when importing all valid loaded rows. Carries a <code>rowsJson</code> action variable (String) with the row payload.</td></tr>
+<tr><td>On Import All (<code>onImportAll</code>)</td><td>Action</td><td>No</td><td>none</td><td>Triggered by Import All, which passes the valid rows of every sheet, up to 5,000 valid rows per sheet. If invalid rows remain, or a sheet has more than 5,000 valid rows, the user confirms first, and the confirmation names the sheets over the limit. For larger imports, read the rows from the Mass Importer REST API or export them. Carries a <code>rowsJson</code> action variable (String) with the row payload.</td></tr>
 </tbody>
 </table>
 
@@ -78,8 +78,8 @@ The API Key property is a Studio Pro **expression**, evaluated in the end user's
 - **Templates:** limit the key to the templates this page uses. Other templates, and their imports and rows, behave as if they did not exist.
 - **External ID:** bind the key to one external ID when each of your customers or tenants gets their own key (see below).
 - **Can manage webhooks:** leave it off, which is the default for new keys. A key bound to an external ID or limited to templates can never manage webhooks, because a webhook receives events for every import in the organization.
-- **Rate limit:** optionally give the key its own requests-per-minute cap. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
-- **Read-only:** Do not make it read-only if users edit, fix, or import rows on this page; a read-only key suits a page that only shows results.
+- **Rate limit:** optionally give the key its own cap on requests per minute. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
+- **Read-only:** Do not make it read-only if users save edits or run bulk fixes on this page. A read-only key can still list imports, show rows, export them and run Import All; a save or bulk fix with it is refused with a message that the key is read-only.
 
 **What a leaked key reaches.** Exactly what the key was narrowed to: the templates it is limited to, and their imports and rows (only those carrying its external ID, if it is bound), for reading and for writing. A key created with no limits reaches every template, import, and row in the organization, plus webhook configuration if that permission was granted. Treat an unnarrowed key as equivalent to handing out access to the whole organization.
 
@@ -93,7 +93,7 @@ Because of all of this:
 
 ### Data handling
 
-The widget fetches import and row data from the Mass Importer API (`massimporter.com` by default). Data displayed in the grid, and any edits made through inline or bulk edit, are read from and written to `massimporter.com`. No import or row data is stored by the widget itself; it is a display and editing surface over the remote service. If your organization needs to know exactly what is transmitted and retained, refer to the Mass Importer data processing terms at massimporter.com.
+The widget fetches import and row data from the Mass Importer API at `massimporter.com`. Data displayed in the grid, and any edits made through inline or bulk edit, are read from and written to `massimporter.com`. No import or row data is stored by the widget itself; it is a display and editing surface over the remote service. If your organization needs to know exactly what is transmitted and retained, refer to the Mass Importer data processing terms at massimporter.com.
 
 ### Support
 

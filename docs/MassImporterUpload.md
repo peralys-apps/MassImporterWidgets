@@ -1,6 +1,6 @@
 ## Mass Importer Upload
 
-Upload files for validation and import via the Mass Importer API. The widget presents a dropzone and upload button, lets the user check how the file's columns map to the template's fields, sends the selected file to Mass Importer, and (optionally) automatically starts validation and polls for its progress, surfacing status through progress indicators and action events. It is the entry point of the pipeline: files uploaded here become an import that the companion Mass Importer Review widget can display and let users act on.
+Upload files for validation and import via the Mass Importer API. The widget presents a dropzone and upload button, lets the user check how the file's columns map to the template's fields, sends the selected file to Mass Importer, which always validates it, and by default follows that validation, polling for its progress and surfacing status through progress indicators and action events. It is the entry point of the pipeline: files uploaded here become an import that the companion Mass Importer Review widget can display and let users act on.
 
 ### Requirement: a Mass Importer account
 
@@ -45,7 +45,7 @@ All properties as declared in `MassImporterUpload.xml`.
 <tr><td>External ID (<code>externalId</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>Optional external identifier used to partition imports, for example a customer ID or project ID. Matches the "External ID" property on the Review widget so imports can be filtered per tenant.</td></tr>
 <tr><td>Accepted File Types (<code>acceptedFileTypes</code>)</td><td>String</td><td>No</td><td><code>.csv,.xlsx,.parquet</code></td><td>Comma-separated list of accepted file extensions. A template with more than one sheet takes XLSX only, so a list without <code>.xlsx</code> cannot import into one.</td></tr>
 <tr><td>Max File Size (MB) (<code>maxFileSizeMB</code>)</td><td>Integer</td><td>No</td><td><code>2048</code></td><td>Upload limit in MB. Only lowers the organization's plan limit (Free 50, Starter/Pro 500, Enterprise 2048), never raises it.</td></tr>
-<tr><td>Auto Start Validation (<code>autoStartValidation</code>)</td><td>Boolean</td><td>No</td><td><code>true</code></td><td>Automatically starts validation after upload completes.</td></tr>
+<tr><td>Auto Start Validation (<code>autoStartValidation</code>)</td><td>Boolean</td><td>No</td><td><code>true</code></td><td>Follow validation in the widget after upload. Mass Importer always validates the file; when off, the widget does not show the result, and On Validation Complete and On Review Results never fire.</td></tr>
 <tr><td>Poll Interval (ms) (<code>pollIntervalMs</code>)</td><td>Integer</td><td>No</td><td><code>5000</code></td><td>Interval, in milliseconds, for polling validation status.</td></tr>
 <tr><td>Import ID Attribute (<code>importIdAttribute</code>)</td><td>Attribute (String)</td><td>No</td><td>none</td><td>Attribute that receives the resulting import ID.</td></tr>
 <tr><td>On Upload Start (<code>onUploadStart</code>)</td><td>Action</td><td>No</td><td>none</td><td>Triggered when file upload starts.</td></tr>
@@ -72,7 +72,7 @@ After the user chooses a file, the **Map** step lists every field of the templat
 - Required fields are labelled **Required**. If one is left unmapped the step warns, the user can still continue, and every row is then reported invalid for that field.
 - Sample values from the first three data rows are shown beside each choice. Parquet files show no sample values.
 - A column that feeds more than one field is flagged, and columns that feed no field are listed as not imported.
-- When the template has several sheets, there is a tab per sheet. Workbook tabs go to the template sheet with the same name first, then template sheets still without a tab take the remaining tabs in order. A template sheet left without a tab imports nothing, and the step says so.
+- When the template has several sheets, there is a tab per sheet. Workbook tabs go to the template sheet with the same name first, then to a template sheet whose slug matches the tab name (both ignoring case), then template sheets still without a tab take the remaining tabs in order. A template sheet left without a tab imports nothing, and the step says so.
 - **Continue to upload** sends the file together with the mapping, covering every field of every sheet that will run, including the fields the user cleared.
 
 The widget reads the column names and sample values from slices of the file in the user's browser, never the whole file, and fetches the template's fields with the configured API key. If it cannot, the step says why and offers **Continue with automatic matching**; the server then matches columns by name, as earlier widget versions always did. This happens when:
@@ -96,7 +96,7 @@ The API Key property is a Studio Pro **expression**, evaluated in the end user's
 - **Templates:** limit the key to the templates this page uses. Other templates, and their imports and rows, behave as if they did not exist.
 - **External ID:** bind the key to one external ID when each of your customers or tenants gets their own key (see below).
 - **Can manage webhooks:** leave it off, which is the default for new keys. A key bound to an external ID or limited to templates can never manage webhooks, because a webhook receives events for every import in the organization.
-- **Rate limit:** optionally give the key its own requests-per-minute cap. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
+- **Rate limit:** optionally give the key its own cap on requests per minute. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
 - **Read-only:** Do not make it read-only: this widget uploads files and creates imports, which a read-only key cannot do.
 
 **What a leaked key reaches.** Exactly what the key was narrowed to: the templates it is limited to, and their imports and rows (only those carrying its external ID, if it is bound), for reading and for writing. A key created with no limits reaches every template, import, and row in the organization, plus webhook configuration if that permission was granted. Treat an unnarrowed key as equivalent to handing out access to the whole organization.

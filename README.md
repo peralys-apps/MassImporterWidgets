@@ -2,7 +2,7 @@
 
 Two Mendix pluggable widgets that add bulk data ingestion to a Mendix app:
 
-- **[Mass Importer Upload](docs/MassImporterUpload.md)**, which uploads a CSV, Excel or Parquet file against a Mass Importer template and starts validation.
+- **[Mass Importer Upload](docs/MassImporterUpload.md)**, which uploads a CSV, Excel or Parquet file to Mass Importer for validation against a template and shows its progress.
 - **[Mass Importer Review](docs/MassImporterReview.md)**, which renders a review grid over a validated import: valid and error rows, inline cell editing, bulk edit, and export to CSV, Excel or Parquet.
 
 The two are designed to be paired, but either can be used on its own.
@@ -31,7 +31,7 @@ Plan tiers change limits, never access. Both widgets work on every tier, and the
 </tbody>
 </table>
 
-A 403 response from a widget is a plan-limit rejection (rows, monthly volume, or concurrent imports), not a missing entitlement.
+A 403 response from a widget is usually a plan limit (rows, monthly volume, or concurrent imports), not a missing entitlement. If its code is KEY_SCOPE_FORBIDDEN, the API key itself does not allow the action, for example a read-only key saving edits.
 
 ## Installation
 
@@ -56,9 +56,9 @@ Compare the output against the hash in the release notes. If they differ, do not
 
 Both widgets take the API key as a widget property. Mendix evaluates that expression in the browser, so the resulting bearer token is present in the delivered page and is readable by any end user of the app.
 
-A Mass Importer API key is always confined to one Mass Importer organization, and that boundary is enforced on the server on every request. When the key is created in the Mass Importer dashboard it can be narrowed further: to the templates the page uses, to one external ID (so the External ID property becomes a boundary rather than a filter), to read-only access, and to its own requests-per-minute cap. A key narrowed to templates or an external ID can never manage webhooks, and new keys do not manage webhooks unless you allow it. Each widget's documentation says which narrowing suits it.
+A Mass Importer API key is always confined to one Mass Importer organization, and that boundary is enforced on the server on every request. When the key is created in the Mass Importer dashboard it can be narrowed further: to the templates the page uses, to one external ID (so the External ID property becomes a boundary rather than a filter), to read-only access, and to its own cap on requests per minute. A key narrowed to templates or an external ID can never manage webhooks, and new keys do not manage webhooks unless you allow it. Each widget's documentation says which narrowing suits it.
 
-Use a dedicated, narrowed key for the widgets, never a key created with no limits, and revoke it as soon as you suspect exposure; revocation takes effect on the next request. For the strongest separation you can also give widget traffic its own Mass Importer organization. If your deployment cannot accept a browser-readable key at all, proxy the calls through a Mendix microflow or REST action so the key stays server-side.
+Use a dedicated, narrowed key for the widgets, never a key created with no limits, and revoke it as soon as you suspect exposure; revocation takes effect on the next request. For the strongest separation you can also give widget traffic its own Mass Importer organization. If your deployment cannot accept a browser-readable key at all, these widgets are not a fit: call the Mass Importer REST API from a Mendix microflow or REST call action instead, so the key stays on the server.
 
 ## Data handling
 
@@ -75,4 +75,3 @@ Licensed under the Apache License, Version 2.0. The full, unmodified licence tex
 Copyright 2026 Peralys
 
 Third-party open-source components bundled in the distributed packages, with their licences and required attributions, are listed in [NOTICE](NOTICE).
-# MassImporterWidgets
