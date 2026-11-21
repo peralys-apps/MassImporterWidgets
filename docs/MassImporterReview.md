@@ -58,6 +58,40 @@ All properties as declared in `MassImporterReview.xml`.
 
 12 properties in total.
 
+### Using the imported rows in your app
+
+The widget imports nothing itself. Import All passes a JSON string to your On Import All microflow, in the Imported Rows Attribute (written before the action fires) or the `rowsJson` action variable.
+
+`sheets` has one entry per template sheet, with its `sheetSlug`, `sheetName` and valid `rows`. Each row is keyed by the template's field keys, not the column labels, and values are typed by field: text, numbers, `true` or `false`, and dates as `YYYY-MM-DD` text.
+
+```json
+{
+  "sheets": [
+    {
+      "sheetSlug": "products",
+      "sheetName": "Products",
+      "rows": [
+        { "sku": "AB100", "unitprice": 12.5, "instock": true, "releasedate": "2026-03-01" },
+        { "sku": "AB101", "unitprice": 8.75, "instock": false, "releasedate": "2026-04-15" }
+      ]
+    }
+  ]
+}
+```
+
+In Studio Pro:
+
+1. **Get a sample.** Show the Imported Rows Attribute in a text area for now, or log `$rowsJson`, run Import All on a test file and copy the JSON. Give every field a real value, optional ones included: a field missing from the sample, or `null` in it, cannot be mapped. Give decimal fields a fraction, such as 12.5, so they are typed as Decimal.
+2. **Create a JSON Structure** from the sample.
+3. **Create an Import Mapping** from it. Map the root and the sheet to non-persistable helper entities, and each row to your own entity: numbers to Decimal (or Integer or Long), booleans to Boolean, text to String. Studio Pro reads a date without a time as a String, so map it to a String attribute, or to a Date and time attribute through a Convert using microflow returning `parseDateTimeUTC($value, 'yyyy-MM-dd')`, with Localize off so the day does not shift.
+4. **In the On Import All microflow**, add **Import with mapping** on `$rowsJson` (or the attribute). Its Commit setting saves your objects. Then show your own confirmation; the widget shows none.
+
+Good to know:
+
+- Field keys change only with the template. A new template version with new fields needs a new sample and a regenerated JSON Structure.
+- An unmapped field is left out of the row, and an empty cell arrives as `null`. A value corrected in the grid can arrive as text, such as `"12.50"`.
+- Import All sends at most 5,000 valid rows per sheet, never invalid ones. For more, read `GET /api/v1/imports/{importId}/rows?view=valid` from a microflow, paged with `start` and `limit` (up to 5,000) per `sheetSlug`. It wraps each row's values in `data`, so it needs its own JSON Structure.
+
 ### Exporting rows
 
 The **Export** menu offers a CSV file, an Excel workbook and a Parquet file, each with **All rows**, **Valid rows** and **Error rows**.
