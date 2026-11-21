@@ -52,13 +52,11 @@ sha256sum peralys.MassImporterReview.mpk
 
 Compare the output against the hash in the release notes. If they differ, do not import the file.
 
-## API key and security
+## Choosing an API key
 
-Both widgets take the API key as a widget property. Mendix evaluates that expression in the browser, so the resulting bearer token is present in the delivered page and is readable by any end user of the app.
+The widgets call Mass Importer from the user's browser, so the key is sent with those requests, as with any widget that talks to a web service directly. Create a key just for the widgets and limit it to what each page needs (templates, one external ID per customer or tenant, read-only for a page that only shows and exports rows, its own cap on requests per minute). Each widget's documentation lists the options.
 
-A Mass Importer API key is always confined to one Mass Importer organization, and that boundary is enforced on the server on every request. When the key is created in the Mass Importer dashboard it can be narrowed further: to the templates the page uses, to one external ID (so the External ID property becomes a boundary rather than a filter), to read-only access, and to its own cap on requests per minute. A key narrowed to templates or an external ID can never manage webhooks, and new keys do not manage webhooks unless you allow it. Each widget's documentation says which narrowing suits it.
-
-Use a dedicated, narrowed key for the widgets, never a key created with no limits, and revoke it as soon as you suspect exposure; revocation takes effect on the next request. For the strongest separation you can also give widget traffic its own Mass Importer organization. If your deployment cannot accept a browser-readable key at all, these widgets are not a fit: call the Mass Importer REST API from a Mendix microflow or REST call action instead, so the key stays on the server.
+A key only ever reaches your own organization's data, within those limits. You can revoke it at any time in the Mass Importer dashboard, and the change applies to the next request. If a key must never be sent from the browser, call the Mass Importer REST API from a microflow instead.
 
 ## Data handling
 

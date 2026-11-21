@@ -41,7 +41,7 @@ All properties as declared in `MassImporterReview.xml`.
 <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>API Key (<code>apiKey</code>)</td><td>Expression (String)</td><td>Yes</td><td>none</td><td>API key for authentication, sent as a Bearer token. See "API key and security" below.</td></tr>
+<tr><td>API Key (<code>apiKey</code>)</td><td>Expression (String)</td><td>Yes</td><td>none</td><td>API key for authentication, sent as a Bearer token. See "Choosing an API key" below.</td></tr>
 <tr><td>Import ID (<code>importId</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>The ID of a specific import to review. If left blank, the widget shows a list of all imports instead of a single import's rows.</td></tr>
 <tr><td>External ID (<code>externalId</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>Filters the import list to only show imports created with this external ID. Matches the "External ID" property on the Upload widget so the two widgets can be paired per customer, project, or tenant.</td></tr>
 <tr><td>Status Filter (<code>statusFilter</code>)</td><td>String</td><td>No</td><td><code>queued,profiling,mapping,validating,validated,completed</code></td><td>Comma-separated list of import statuses to include in the import list.</td></tr>
@@ -69,27 +69,16 @@ The **Export** menu offers a CSV file, an Excel workbook and a Parquet file, eac
 - **A running bulk fix blocks export.** While a bulk fix is still applying to the import, the Export button is disabled with the hint "A bulk fix is running. Export when it finishes." so an export never mixes fixed and unfixed rows.
 - **Parquet** needs the Pro or Enterprise plan and stays locked until the plan is known (see the plan table above).
 
-### API key and security
+### Choosing an API key
 
-The API Key property is a Studio Pro **expression**, evaluated in the end user's browser. The resulting bearer token is present in the page delivered to the client, which means any end user of the Mendix app who can inspect network requests or page state can read it and call the Mass Importer API directly with that key. This is a known limitation of a client-side widget property, not an oversight. Plan for the key being readable by everyone who can open the page.
+The widget calls Mass Importer from the user's browser, so the key is sent with those requests, as with any widget that talks to a web service directly. Create a key just for this widget and limit it to what the page needs:
 
-**What the key is scoped to.** A Mass Importer API key is always confined to one Mass Importer organization. It cannot read or write another organization's data, and that boundary is enforced on the server on every request. When you create the key in the Mass Importer dashboard you can narrow it further, and a key used by this widget should be narrowed:
+- **Templates:** only the templates this page uses.
+- **External ID:** bind the key to one customer or tenant, so it can only see their imports. Set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
+- **Read-only:** fine for a page that only shows, exports and imports rows. Leave it off if users save edits or run bulk fixes here.
+- **Rate limit:** optionally its own cap on requests per minute.
 
-- **Templates:** limit the key to the templates this page uses. Other templates, and their imports and rows, behave as if they did not exist.
-- **External ID:** bind the key to one external ID when each of your customers or tenants gets their own key (see below).
-- **Can manage webhooks:** leave it off, which is the default for new keys. A key bound to an external ID or limited to templates can never manage webhooks, because a webhook receives events for every import in the organization.
-- **Rate limit:** optionally give the key its own cap on requests per minute. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
-- **Read-only:** Do not make it read-only if users save edits or run bulk fixes on this page. A read-only key can still list imports, show rows, export them and run Import All; a save or bulk fix with it is refused with a message that the key is read-only.
-
-**What a leaked key reaches.** Exactly what the key was narrowed to: the templates it is limited to, and their imports and rows (only those carrying its external ID, if it is bound), for reading and for writing. A key created with no limits reaches every template, import, and row in the organization, plus webhook configuration if that permission was granted. Treat an unnarrowed key as equivalent to handing out access to the whole organization.
-
-**External ID is a filter unless the key is bound to one.** The External ID property narrows what the widget requests. With an ordinary key it is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. To make it a real boundary, create the API key bound to an external ID in the Mass Importer dashboard: a bound key can only see and create imports carrying that value, and the server enforces it on every request. When you use a bound key, set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
-
-Because of all of this:
-
-- Create a dedicated key for this property and narrow it as described above. Never put a key created with no limits into it.
-- For the strongest separation, you can also give widget traffic its own Mass Importer organization, holding only the templates and imports the app's end users are meant to reach.
-- Revoke the key as soon as you suspect exposure. Revocation takes effect on the next request made with it.
+A key only ever reaches your own organization's data, within those limits. You can revoke it at any time in the Mass Importer dashboard, and the change applies to the next request. If a key must never be sent from the browser, call the Mass Importer REST API from a microflow instead.
 
 ### Data handling
 

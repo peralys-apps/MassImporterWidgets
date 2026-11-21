@@ -39,7 +39,7 @@ All properties as declared in `MassImporterUpload.xml`.
 <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>API Key (<code>apiKey</code>)</td><td>Expression (String)</td><td>Yes</td><td>none</td><td>API key for authentication, sent as a Bearer token. See "API key and security" below.</td></tr>
+<tr><td>API Key (<code>apiKey</code>)</td><td>Expression (String)</td><td>Yes</td><td>none</td><td>API key for authentication, sent as a Bearer token. See "Choosing an API key" below.</td></tr>
 <tr><td>Template Mode (<code>templateMode</code>)</td><td>Enumeration: Template Picker / Fixed Template</td><td>No</td><td><code>picker</code></td><td>How the import template is determined. "Template Picker" lets the end user choose a template; "Fixed Template" always uses the template configured in Template Slug.</td></tr>
 <tr><td>Template Slug (<code>templateSlug</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>Slug of the template to use when Template Mode is "Fixed Template". Ignored in picker mode.</td></tr>
 <tr><td>External ID (<code>externalId</code>)</td><td>Expression (String)</td><td>No</td><td>none</td><td>Optional external identifier used to partition imports, for example a customer ID or project ID. Matches the "External ID" property on the Review widget so imports can be filtered per tenant.</td></tr>
@@ -87,27 +87,16 @@ A CSV or Parquet file holds one sheet, so a template with more than one sheet ac
 
 To read the sheets, the widget calls `GET /api/v1/templates` and `GET /api/v1/template-versions/{id}/sheets` with the configured API key when the template is known, before any file is chosen.
 
-### API key and security
+### Choosing an API key
 
-The API Key property is a Studio Pro **expression**, evaluated in the end user's browser. The resulting bearer token is present in the page delivered to the client, which means any end user of the Mendix app who can inspect network requests or page state can read it and call the Mass Importer API directly with that key. This is a known limitation of a client-side widget property, not an oversight. Plan for the key being readable by everyone who can open the page.
+The widget calls Mass Importer from the user's browser, so the key is sent with those requests, as with any widget that talks to a web service directly. Create a key just for this widget and limit it to what the page needs:
 
-**What the key is scoped to.** A Mass Importer API key is always confined to one Mass Importer organization. It cannot read or write another organization's data, and that boundary is enforced on the server on every request. When you create the key in the Mass Importer dashboard you can narrow it further, and a key used by this widget should be narrowed:
+- **Templates:** only the templates this page uses.
+- **External ID:** bind the key to one customer or tenant, so it can only see their imports. Set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
+- **Read-only:** leave it off. This widget creates imports, which a read-only key cannot do.
+- **Rate limit:** optionally its own cap on requests per minute.
 
-- **Templates:** limit the key to the templates this page uses. Other templates, and their imports and rows, behave as if they did not exist.
-- **External ID:** bind the key to one external ID when each of your customers or tenants gets their own key (see below).
-- **Can manage webhooks:** leave it off, which is the default for new keys. A key bound to an external ID or limited to templates can never manage webhooks, because a webhook receives events for every import in the organization.
-- **Rate limit:** optionally give the key its own cap on requests per minute. Requests over it are refused without counting against your organization's limit, so a leaked key cannot starve your other integrations.
-- **Read-only:** Do not make it read-only: this widget uploads files and creates imports, which a read-only key cannot do.
-
-**What a leaked key reaches.** Exactly what the key was narrowed to: the templates it is limited to, and their imports and rows (only those carrying its external ID, if it is bound), for reading and for writing. A key created with no limits reaches every template, import, and row in the organization, plus webhook configuration if that permission was granted. Treat an unnarrowed key as equivalent to handing out access to the whole organization.
-
-**External ID is a filter unless the key is bound to one.** The External ID property narrows what the widget requests. With an ordinary key it is supplied by the caller, so anyone holding the key can simply omit it and list everything in the organization. To make it a real boundary, create the API key bound to an external ID in the Mass Importer dashboard: a bound key can only see and create imports carrying that value, and the server enforces it on every request. When you use a bound key, set this widget's External ID property to the same value or leave it empty; a different value is rejected with EXTERNAL_ID_MISMATCH.
-
-Because of all of this:
-
-- Create a dedicated key for this property and narrow it as described above. Never put a key created with no limits into it.
-- For the strongest separation, you can also give widget traffic its own Mass Importer organization, holding only the templates and imports the app's end users are meant to reach.
-- Revoke the key as soon as you suspect exposure. Revocation takes effect on the next request made with it.
+A key only ever reaches your own organization's data, within those limits. You can revoke it at any time in the Mass Importer dashboard, and the change applies to the next request. If a key must never be sent from the browser, call the Mass Importer REST API from a microflow instead.
 
 ### Data handling
 
