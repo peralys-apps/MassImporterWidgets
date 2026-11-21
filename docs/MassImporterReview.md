@@ -89,7 +89,7 @@ In Studio Pro:
 Good to know:
 
 - Field keys change only with the template. A new template version with new fields needs a new sample and a regenerated JSON Structure.
-- An unmapped field is left out of the row, and an empty cell arrives as `null`. A value corrected in the grid can arrive as text, such as `"12.50"`.
+- An unmapped field is left out of the row, and an empty cell arrives as `null`, whether it was empty in the file or emptied in the grid. Corrected values keep their type, the same as uploaded ones.
 - Import All sends at most 5,000 valid rows per sheet, never invalid ones. For more, read `GET /api/v1/imports/{importId}/rows?view=valid` from a microflow, paged with `start` and `limit` (up to 5,000) per `sheetSlug`. It wraps each row's values in `data`, so it needs its own JSON Structure.
 
 ### Exporting rows
